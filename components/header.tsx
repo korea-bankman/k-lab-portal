@@ -5,9 +5,12 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function Header() {
   const supabase = await createClient();
-  const {
-    data: { user }
-  } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+  const user = supabase
+    ? await supabase.auth
+        .getUser()
+        .then((result) => result.data.user)
+        .catch(() => null)
+    : null;
   const profile = user ? await getSignedInProfile() : null;
 
   return (
