@@ -5,13 +5,16 @@ import { PostList } from "@/components/post-list";
 import { Section } from "@/components/section";
 import { Sidebar } from "@/components/sidebar";
 import { getBoardBySlug, getPosts } from "@/lib/data/repository";
+import { getSupabaseBoardBySlug, getSupabasePosts } from "@/lib/data/supabase-repository";
 
 export default async function BoardPage({ params, searchParams }: { params: Promise<{ boardSlug: string }>; searchParams: Promise<{ q?: string }> }) {
   const { boardSlug } = await params;
   const { q } = await searchParams;
-  const board = getBoardBySlug(boardSlug);
+  const supabaseBoard = await getSupabaseBoardBySlug(boardSlug);
+  const board = supabaseBoard ?? getBoardBySlug(boardSlug);
   if (!board) notFound();
-  const boardPosts = getPosts({ boardId: board.id, query: q });
+  const supabasePosts = supabaseBoard ? await getSupabasePosts({ boardId: supabaseBoard.id, query: q }) : [];
+  const boardPosts = supabaseBoard ? supabasePosts : getPosts({ boardId: board.id, query: q });
 
   return (
     <div className="container-page py-6">

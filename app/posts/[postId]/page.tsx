@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getBoardBySlug, getBoards, getCommentsByPostId, getPostById } from "@/lib/data/repository";
+import { getSupabaseBoards, getSupabasePostById } from "@/lib/data/supabase-repository";
 import { formatDate } from "@/lib/utils";
 
 export default async function PostDetailPage({ params }: { params: Promise<{ postId: string }> }) {
   const { postId } = await params;
-  const post = getPostById(postId);
+  const supabasePost = await getSupabasePostById(postId);
+  const post = supabasePost ?? getPostById(postId);
   if (!post) notFound();
-  const board = getBoards().find((item) => item.id === post.boardId) ?? getBoardBySlug("free");
-  const comments = getCommentsByPostId(post.id);
+  const supabaseBoards = supabasePost ? await getSupabaseBoards() : [];
+  const board = [...supabaseBoards, ...getBoards()].find((item) => item.id === post.boardId) ?? getBoardBySlug("free");
+  const comments = supabasePost ? [] : getCommentsByPostId(post.id);
 
   return (
     <div className="container-page py-6">
