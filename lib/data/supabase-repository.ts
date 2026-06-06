@@ -22,7 +22,7 @@ type PostRow = {
   is_notice: boolean;
   created_at: string;
   updated_at: string;
-  profiles: { nickname: string } | null;
+  profiles?: { nickname: string } | null;
 };
 
 function mapBoard(row: BoardRow): Board {
@@ -95,7 +95,9 @@ export async function getSupabasePosts(options?: { boardId?: string; query?: str
   }
 
   const { data, error } = await query;
-  if (error || !data) return [];
+  if (error || !data) {
+    return getSupabasePostsWithoutProfiles(options);
+  }
   return (data as unknown as PostRow[]).map(mapPost);
 }
 
@@ -106,6 +108,49 @@ export async function getSupabasePostById(id: string) {
   const { data, error } = await supabase
     .from("posts")
     .select("id, board_id, title, content, author_id, view_count, like_count, comment_count, is_notice, created_at, updated_at, profiles(nickname)")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) {
+    return getSupabasePostByIdWithoutProfile(id);
+  }
+  return mapPost(data as unknown as PostRow);
+}
+
+async function getSupabasePostsWithoutProfiles(options?: { boardId?: string; query?: string; limit?: number }) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from("posts")
+    .select("id, board_id, title, content, author_id, view_count, like_count, comment_count, is_notice, created_at, updated_at")
+    .order("is_notice", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (options?.boardId) {
+    query = query.eq("board_id", options.boardId);
+  }
+
+  if (options?.query) {
+    query = query.or(`title.ilike.%${options.query}%,content.ilike.%${options.query}%`);
+  }
+
+  if (typeof options?.limit === "number") {
+    query = query.limit(options.limit);
+  }
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+  return (data as unknown as PostRow[]).map(mapPost);
+}
+
+async function getSupabasePostByIdWithoutProfile(id: string) {
+  const supabase = await createClient();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, board_id, title, content, author_id, view_count, like_count, comment_count, is_notice, created_at, updated_at")
     .eq("id", id)
     .maybeSingle();
 

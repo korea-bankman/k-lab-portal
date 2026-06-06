@@ -54,7 +54,10 @@ export async function createPostAction(formData: FormData) {
     redirect(withMessage("/posts/new", `게시글 저장에 실패했습니다: ${error?.message ?? "알 수 없는 오류"}`));
   }
 
+  const { data: board } = await supabase.from("boards").select("slug").eq("id", boardId).maybeSingle();
+  const boardSlug = board?.slug ?? "free";
+
   revalidatePath("/");
-  revalidatePath("/boards/[boardSlug]", "page");
-  redirect(`/posts/${data.id}`);
+  revalidatePath(`/boards/${boardSlug}`);
+  redirect(`/boards/${boardSlug}`);
 }
