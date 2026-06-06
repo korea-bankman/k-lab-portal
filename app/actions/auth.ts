@@ -27,7 +27,7 @@ export async function loginAction(formData: FormData) {
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    redirect(withMessage("/login", "로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요."));
+    redirect(withMessage("/login", `로그인에 실패했습니다: ${error.message}`));
   }
 
   redirect("/mypage");
@@ -60,7 +60,7 @@ export async function signupAction(formData: FormData) {
   });
 
   if (error) {
-    redirect(withMessage("/signup", "회원가입에 실패했습니다. 이미 가입된 이메일인지 확인해 주세요."));
+    redirect(withMessage("/signup", `회원가입에 실패했습니다: ${error.message}`));
   }
 
   redirect(withMessage("/login", "회원가입 요청이 완료되었습니다. 이메일 확인 후 로그인해 주세요."));
