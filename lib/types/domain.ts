@@ -1,4 +1,4 @@
-export type UserRole = "guest" | "member" | "admin";
+export type UserRole = "guest" | "member" | "manager" | "admin";
 
 export type BoardGroup = "general" | "laboratory-medicine" | "physiology" | "ultrasound";
 

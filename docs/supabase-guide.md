@@ -3,12 +3,13 @@
 1. Supabase 프로젝트를 생성합니다.
 2. `docs/supabase-schema.sql` 내용을 SQL Editor에서 실행합니다.
 3. `docs/supabase-seed.sql` 내용을 SQL Editor에서 실행해 게시판 초기 데이터를 넣습니다.
-4. Authentication > Providers에서 Email provider를 활성화합니다.
-5. `.env.example`을 참고해 `.env.local`을 만듭니다.
-6. `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`를 입력합니다.
-7. 운영 배포 시 Netlify 환경변수에도 동일하게 등록합니다.
-8. Authentication > URL Configuration에서 Site URL을 Netlify 주소로 설정합니다.
-9. Email confirmation을 켜면 가입 후 이메일 확인이 필요하고, 끄면 가입 직후 로그인이 가능합니다.
+4. 기존 프로젝트에 매니저/운영 권한을 추가할 때는 `docs/supabase-role-migration.sql`을 SQL Editor에서 실행합니다.
+5. Authentication > Providers에서 Email provider를 활성화합니다.
+6. `.env.example`을 참고해 `.env.local`을 만듭니다.
+7. `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`를 입력합니다.
+8. 운영 배포 시 Netlify 환경변수에도 동일하게 등록합니다.
+9. Authentication > URL Configuration에서 Site URL을 Netlify 주소로 설정합니다.
+10. Email confirmation을 켜면 가입 후 이메일 확인이 필요하고, 끄면 가입 직후 로그인이 가능합니다.
 
 현재 앱은 Supabase 환경변수가 없으면 Mock 데이터로 렌더링됩니다. 실제 DB 연결 시 `lib/data/repository.ts`를 Supabase query adapter로 교체하거나, 같은 함수 이름을 유지한 채 서버 액션/API 라우트를 추가하면 됩니다.
 
@@ -16,7 +17,8 @@
 
 - 비회원: 게시글, 댓글, 채용공고 읽기
 - 회원: 게시글 작성, 댓글 작성, 좋아요
-- 관리자: 모든 게시글/댓글/채용공고 관리
+- 매니저: 담당 게시판 신고/게시글/댓글 관리
+- 관리자: 모든 게시글/댓글/채용공고/회원 권한 관리
 
 관리자 계정 지정:
 

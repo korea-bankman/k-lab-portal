@@ -1,6 +1,6 @@
 create extension if not exists "uuid-ossp";
 
-create type public.user_role as enum ('member', 'admin');
+create type public.user_role as enum ('member', 'manager', 'admin');
 
 create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -53,6 +53,10 @@ create table public.posts (
   like_count integer not null default 0,
   comment_count integer not null default 0,
   is_notice boolean not null default false,
+  hidden_at timestamptz,
+  hidden_by uuid references public.profiles(id),
+  deleted_at timestamptz,
+  deleted_by uuid references public.profiles(id),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -62,6 +66,10 @@ create table public.comments (
   post_id uuid not null references public.posts(id) on delete cascade,
   author_id uuid not null references public.profiles(id) on delete cascade,
   content text not null,
+  hidden_at timestamptz,
+  hidden_by uuid references public.profiles(id),
+  deleted_at timestamptz,
+  deleted_by uuid references public.profiles(id),
   created_at timestamptz not null default now()
 );
 
@@ -114,6 +122,63 @@ create table public.notifications (
   created_at timestamptz not null default now()
 );
 
+create table public.manager_board_permissions (
+  id uuid primary key default uuid_generate_v4(),
+  manager_id uuid not null references public.profiles(id) on delete cascade,
+  board_id uuid not null references public.boards(id) on delete cascade,
+  created_by uuid references public.profiles(id),
+  created_at timestamptz not null default now(),
+  unique (manager_id, board_id)
+);
+
+create table public.reports (
+  id uuid primary key default uuid_generate_v4(),
+  reporter_id uuid not null references public.profiles(id) on delete cascade,
+  post_id uuid references public.posts(id) on delete cascade,
+  comment_id uuid references public.comments(id) on delete cascade,
+  reason text not null,
+  status text not null default 'open',
+  handled_by uuid references public.profiles(id),
+  handled_at timestamptz,
+  created_at timestamptz not null default now(),
+  constraint reports_target_check check (post_id is not null or comment_id is not null)
+);
+
+create table public.moderation_logs (
+  id uuid primary key default uuid_generate_v4(),
+  actor_id uuid not null references public.profiles(id) on delete cascade,
+  target_type text not null,
+  target_id uuid not null,
+  action text not null,
+  reason text,
+  created_at timestamptz not null default now()
+);
+
+create or replace function public.is_admin(user_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = user_id and role = 'admin'
+  );
+$$;
+
+create or replace function public.is_manager_for_board(user_id uuid, target_board_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select public.is_admin(user_id)
+    or exists (
+      select 1 from public.manager_board_permissions
+      where manager_id = user_id and board_id = target_board_id
+    );
+$$;
+
 alter table public.profiles enable row level security;
 alter table public.boards enable row level security;
 alter table public.posts enable row level security;
@@ -124,6 +189,9 @@ alter table public.job_sources enable row level security;
 alter table public.tags enable row level security;
 alter table public.post_tags enable row level security;
 alter table public.notifications enable row level security;
+alter table public.manager_board_permissions enable row level security;
+alter table public.reports enable row level security;
+alter table public.moderation_logs enable row level security;
 
 create policy "public read boards" on public.boards for select using (true);
 create policy "public read posts" on public.posts for select using (true);
@@ -131,7 +199,21 @@ create policy "public read comments" on public.comments for select using (true);
 create policy "public read jobs" on public.jobs for select using (true);
 create policy "public read profiles" on public.profiles for select using (true);
 create policy "members update own profile" on public.profiles for update using (auth.uid() = id);
+create policy "admins update profiles" on public.profiles for update using (public.is_admin(auth.uid()));
 create policy "members write own posts" on public.posts for insert with check (auth.uid() = author_id);
 create policy "members update own posts" on public.posts for update using (auth.uid() = author_id);
+create policy "managers moderate posts" on public.posts for update using (public.is_manager_for_board(auth.uid(), board_id));
 create policy "members write comments" on public.comments for insert with check (auth.uid() = author_id);
+create policy "managers moderate comments" on public.comments for update using (
+  exists (
+    select 1 from public.posts
+    where posts.id = comments.post_id
+      and public.is_manager_for_board(auth.uid(), posts.board_id)
+  )
+);
 create policy "members like posts" on public.post_likes for insert with check (auth.uid() = user_id);
+create policy "admins manage manager permissions" on public.manager_board_permissions for all using (public.is_admin(auth.uid())) with check (public.is_admin(auth.uid()));
+create policy "managers read own permissions" on public.manager_board_permissions for select using (manager_id = auth.uid() or public.is_admin(auth.uid()));
+create policy "members create reports" on public.reports for insert with check (auth.uid() = reporter_id);
+create policy "managers read reports" on public.reports for select using (public.is_admin(auth.uid()));
+create policy "moderators write logs" on public.moderation_logs for insert with check (actor_id = auth.uid());

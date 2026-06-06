@@ -5,6 +5,8 @@ import { getSignedInProfile } from "@/lib/auth/profile";
 import { getCurrentUser, getPosts } from "@/lib/data/repository";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export default async function MyPage() {
   const supabase = await createClient();
   const {
@@ -45,6 +47,16 @@ export default async function MyPage() {
           <Link className="mt-5 block rounded-md bg-brand-600 px-4 py-2 text-center font-bold text-white" href="/posts/new">
             글쓰기
           </Link>
+          {displayUser.role === "manager" || displayUser.role === "admin" ? (
+            <Link className="mt-2 block rounded-md border px-4 py-2 text-center font-bold" href="/manager">
+              매니저 콘솔
+            </Link>
+          ) : null}
+          {displayUser.role === "admin" ? (
+            <Link className="mt-2 block rounded-md border px-4 py-2 text-center font-bold" href="/admin">
+              관리자 페이지
+            </Link>
+          ) : null}
         </aside>
         <Section title="내가 쓴 글">
           <PostList posts={myPosts} />

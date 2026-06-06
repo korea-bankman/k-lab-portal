@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOutAction } from "@/app/actions/auth";
+import { getSignedInProfile } from "@/lib/auth/profile";
 import { createClient } from "@/lib/supabase/server";
 
 export async function Header() {
@@ -7,6 +8,7 @@ export async function Header() {
   const {
     data: { user }
   } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+  const profile = user ? await getSignedInProfile() : null;
 
   return (
     <header className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
@@ -45,6 +47,16 @@ export async function Header() {
           <Link className="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100" href="/jobs">
             채용
           </Link>
+          {profile?.role === "manager" || profile?.role === "admin" ? (
+            <Link className="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100" href="/manager">
+              매니저
+            </Link>
+          ) : null}
+          {profile?.role === "admin" ? (
+            <Link className="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100" href="/admin">
+              관리자
+            </Link>
+          ) : null}
           {user ? (
             <>
               <Link className="rounded-md border px-3 py-2 font-semibold" href="/mypage">

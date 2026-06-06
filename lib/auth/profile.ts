@@ -4,7 +4,7 @@ export type AuthProfile = {
   id: string;
   email: string;
   nickname: string;
-  role: "member" | "admin";
+  role: "member" | "manager" | "admin";
   department: string | null;
   region: string | null;
 };
@@ -37,4 +37,8 @@ export async function getSignedInProfile() {
   }
 
   return data as AuthProfile;
+}
+
+export function canManage(profile: AuthProfile | null) {
+  return profile?.role === "admin" || profile?.role === "manager";
 }
