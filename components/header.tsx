@@ -1,6 +1,13 @@
 import Link from "next/link";
+import { signOutAction } from "@/app/actions/auth";
+import { createClient } from "@/lib/supabase/server";
 
-export function Header() {
+export async function Header() {
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+
   return (
     <header className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
       <div className="container-page flex flex-col gap-3 py-3 md:flex-row md:items-center">
@@ -8,14 +15,20 @@ export function Header() {
           <Link href="/" className="text-xl font-black tracking-tight text-brand-700">
             K-Lab Portal
           </Link>
-          <div className="flex gap-2 md:hidden">
-            <Link className="rounded-md border px-3 py-1.5 text-sm font-semibold" href="/login">
-              로그인
+          {user ? (
+            <Link className="rounded-md border px-3 py-1.5 text-sm font-semibold md:hidden" href="/mypage">
+              마이페이지
             </Link>
-            <Link className="rounded-md bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white" href="/signup">
-              가입
-            </Link>
-          </div>
+          ) : (
+            <div className="flex gap-2 md:hidden">
+              <Link className="rounded-md border px-3 py-1.5 text-sm font-semibold" href="/login">
+                로그인
+              </Link>
+              <Link className="rounded-md bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white" href="/signup">
+                가입
+              </Link>
+            </div>
+          )}
         </div>
         <form action="/boards/free" className="flex flex-1">
           <input
@@ -32,12 +45,25 @@ export function Header() {
           <Link className="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-slate-100" href="/jobs">
             채용
           </Link>
-          <Link className="rounded-md border px-3 py-2 font-semibold" href="/login">
-            로그인
-          </Link>
-          <Link className="rounded-md bg-brand-600 px-3 py-2 font-semibold text-white" href="/signup">
-            회원가입
-          </Link>
+          {user ? (
+            <>
+              <Link className="rounded-md border px-3 py-2 font-semibold" href="/mypage">
+                마이페이지
+              </Link>
+              <form action={signOutAction}>
+                <button className="rounded-md bg-slate-800 px-3 py-2 font-semibold text-white">로그아웃</button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link className="rounded-md border px-3 py-2 font-semibold" href="/login">
+                로그인
+              </Link>
+              <Link className="rounded-md bg-brand-600 px-3 py-2 font-semibold text-white" href="/signup">
+                회원가입
+              </Link>
+            </>
+          )}
         </nav>
       </div>
     </header>

@@ -12,6 +12,27 @@ create table public.profiles (
   created_at timestamptz not null default now()
 );
 
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, nickname, department)
+  values (
+    new.id,
+    coalesce(new.email, ''),
+    coalesce(new.raw_user_meta_data->>'nickname', split_part(coalesce(new.email, 'member'), '@', 1)),
+    new.raw_user_meta_data->>'department'
+  );
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute procedure public.handle_new_user();
+
 create table public.boards (
   id uuid primary key default uuid_generate_v4(),
   slug text not null unique,
@@ -108,6 +129,8 @@ create policy "public read boards" on public.boards for select using (true);
 create policy "public read posts" on public.posts for select using (true);
 create policy "public read comments" on public.comments for select using (true);
 create policy "public read jobs" on public.jobs for select using (true);
+create policy "public read profiles" on public.profiles for select using (true);
+create policy "members update own profile" on public.profiles for update using (auth.uid() = id);
 create policy "members write own posts" on public.posts for insert with check (auth.uid() = author_id);
 create policy "members update own posts" on public.posts for update using (auth.uid() = author_id);
 create policy "members write comments" on public.comments for insert with check (auth.uid() = author_id);
