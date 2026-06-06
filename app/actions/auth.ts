@@ -15,7 +15,7 @@ function withMessage(path: string, message: string) {
 export async function loginAction(formData: FormData) {
   const supabase = await createClient();
   if (!supabase) {
-    redirect(withMessage("/login", "Supabase 환경변수를 먼저 연결해야 로그인할 수 있습니다."));
+    redirect(withMessage("/login", "Supabase 환경변수를 확인해 주세요. URL은 https://프로젝트ID.supabase.co 형식이어야 합니다."));
   }
 
   const email = getString(formData, "email");
@@ -36,7 +36,7 @@ export async function loginAction(formData: FormData) {
 export async function signupAction(formData: FormData) {
   const supabase = await createClient();
   if (!supabase) {
-    redirect(withMessage("/signup", "Supabase 환경변수를 먼저 연결해야 회원가입할 수 있습니다."));
+    redirect(withMessage("/signup", "Supabase 환경변수를 확인해 주세요. URL은 https://프로젝트ID.supabase.co 형식이어야 합니다."));
   }
 
   const email = getString(formData, "email");
