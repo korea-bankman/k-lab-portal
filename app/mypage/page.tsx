@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PostList } from "@/components/post-list";
 import { Section } from "@/components/section";
+import { getSignedInProfile } from "@/lib/auth/profile";
 import { getCurrentUser, getPosts } from "@/lib/data/repository";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,14 +10,15 @@ export default async function MyPage() {
   const {
     data: { user: authUser }
   } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+  const authProfile = await getSignedInProfile();
   const mockUser = getCurrentUser();
   const displayUser = authUser
     ? {
-        email: authUser.email ?? "",
-        nickname: String(authUser.user_metadata.nickname ?? authUser.email ?? "회원"),
-        role: "member",
-        department: String(authUser.user_metadata.department ?? "미설정"),
-        region: "미설정"
+        email: authProfile?.email ?? authUser.email ?? "",
+        nickname: authProfile?.nickname ?? String(authUser.user_metadata.nickname ?? authUser.email ?? "회원"),
+        role: authProfile?.role ?? "member",
+        department: authProfile?.department ?? String(authUser.user_metadata.department ?? "미설정"),
+        region: authProfile?.region ?? "미설정"
       }
     : mockUser;
   const myPosts = getPosts().filter((post) => post.authorId === mockUser.id);

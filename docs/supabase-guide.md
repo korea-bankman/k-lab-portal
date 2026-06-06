@@ -18,6 +18,16 @@
 - 회원: 게시글 작성, 댓글 작성, 좋아요
 - 관리자: 모든 게시글/댓글/채용공고 관리
 
+관리자 계정 지정:
+
+```sql
+update public.profiles
+set role = 'admin'
+where email = '관리자로_쓸_이메일@example.com';
+```
+
+위 SQL을 실행한 뒤 해당 계정으로 다시 로그인하면 `/admin` 접근이 가능합니다.
+
 향후 확장:
 
 - `job_sources`별 수집기 추가

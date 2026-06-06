@@ -20,7 +20,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <p>© 2026 K-Lab Portal. Clinical laboratory community MVP.</p>
             <div className="flex gap-4">
               <Link href="/boards/notice">공지사항</Link>
-              <Link href="/admin">관리자</Link>
               <Link href="/jobs">채용공고</Link>
             </div>
           </div>

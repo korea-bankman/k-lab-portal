@@ -1,7 +1,38 @@
 import Link from "next/link";
 import { getBoards, getJobSources, getJobs, getPosts } from "@/lib/data/repository";
+import { getSignedInProfile } from "@/lib/auth/profile";
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const profile = await getSignedInProfile();
+
+  if (!profile) {
+    return (
+      <div className="container-page py-10">
+        <div className="rounded-lg border bg-white p-6">
+          <h1 className="text-2xl font-black">관리자 로그인이 필요합니다</h1>
+          <p className="mt-2 text-slate-600">관리자 페이지는 로그인한 관리자만 접근할 수 있습니다.</p>
+          <Link href="/login" className="mt-5 inline-block rounded-md bg-brand-600 px-5 py-2.5 font-bold text-white">
+            로그인하기
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (profile.role !== "admin") {
+    return (
+      <div className="container-page py-10">
+        <div className="rounded-lg border bg-white p-6">
+          <h1 className="text-2xl font-black">접근 권한이 없습니다</h1>
+          <p className="mt-2 text-slate-600">현재 계정은 {profile.role} 권한입니다. 관리자 권한이 있는 계정만 이 페이지를 볼 수 있습니다.</p>
+          <Link href="/" className="mt-5 inline-block rounded-md border px-5 py-2.5 font-bold">
+            홈으로 돌아가기
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const stats = [
     ["게시판", getBoards().length],
     ["게시글", getPosts().length],
@@ -13,7 +44,7 @@ export default function AdminPage() {
     <div className="container-page py-6">
       <div className="mb-5 rounded-lg border bg-white p-5">
         <h1 className="text-2xl font-black">관리자 페이지</h1>
-        <p className="mt-1 text-sm text-slate-500">Mock 관리자 대시보드입니다. Supabase RLS와 role 기반 권한으로 확장하세요.</p>
+        <p className="mt-1 text-sm text-slate-500">{profile.nickname} 관리자 계정으로 접속 중입니다.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-4">
         {stats.map(([label, value]) => (
