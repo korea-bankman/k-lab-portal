@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Board, BoardGroup, Comment, Job, Post } from "@/lib/types/domain";
+import type { Board, BoardGroup, Comment, Job, Notification, Post } from "@/lib/types/domain";
 
 type BoardRow = {
   id: string;
@@ -70,6 +70,15 @@ type ReportRow = {
   created_at: string;
   profiles?: { nickname: string } | null;
   posts?: { title: string; board_id: string } | null;
+};
+
+type NotificationRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  link_url: string | null;
+  is_read: boolean;
+  created_at: string;
 };
 
 function mapBoard(row: BoardRow): Board {
@@ -349,4 +358,26 @@ export async function getOpenReports(options?: { boardIds?: string[]; limit?: nu
       postTitle: row.posts?.title ?? "게시글",
       boardId: row.posts?.board_id ?? ""
     }));
+}
+
+export async function getSupabaseNotifications(userId: string, limit = 10): Promise<Notification[]> {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("id, user_id, title, link_url, is_read, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+  return (data as NotificationRow[]).map((row) => ({
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    linkUrl: row.link_url ?? undefined,
+    isRead: row.is_read,
+    createdAt: row.created_at
+  }));
 }

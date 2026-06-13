@@ -148,8 +148,10 @@ export async function addCommentAction(formData: FormData) {
   }
 
   await refreshPostCommentCount(postId);
+  await notifyPostAuthor(postId, user.id, "내 게시글에 새 댓글이 달렸습니다.");
   revalidatePath("/");
   revalidatePath(`/posts/${postId}`);
+  revalidatePath("/mypage");
   redirect(`/posts/${postId}`);
 }
 
@@ -184,11 +186,13 @@ export async function togglePostLikeAction(formData: FormData) {
     await admin.from("post_likes").delete().eq("post_id", postId).eq("user_id", user.id);
   } else {
     await admin.from("post_likes").insert({ post_id: postId, user_id: user.id });
+    await notifyPostAuthor(postId, user.id, "내 게시글이 좋아요를 받았습니다.");
   }
 
   await refreshPostLikeCount(postId);
   revalidatePath("/");
   revalidatePath(`/posts/${postId}`);
+  revalidatePath("/mypage");
   redirect(`/posts/${postId}`);
 }
 
@@ -293,4 +297,18 @@ async function refreshPostLikeCount(postId: string) {
     .eq("post_id", postId);
 
   await admin.from("posts").update({ like_count: count ?? 0 }).eq("id", postId);
+}
+
+async function notifyPostAuthor(postId: string, actorId: string, title: string) {
+  const admin = createAdminClient();
+  if (!admin) return;
+
+  const { data: post } = await admin.from("posts").select("author_id").eq("id", postId).maybeSingle();
+  if (!post?.author_id || post.author_id === actorId) return;
+
+  await admin.from("notifications").insert({
+    user_id: post.author_id,
+    title,
+    link_url: `/posts/${postId}`
+  });
 }

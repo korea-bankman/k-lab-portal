@@ -118,6 +118,7 @@ create table public.notifications (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null references public.profiles(id) on delete cascade,
   title text not null,
+  link_url text,
   is_read boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -200,6 +201,8 @@ create policy "public read jobs" on public.jobs for select using (true);
 create policy "public read profiles" on public.profiles for select using (true);
 create policy "members update own profile" on public.profiles for update using (auth.uid() = id);
 create policy "admins update profiles" on public.profiles for update using (public.is_admin(auth.uid()));
+create policy "members read own notifications" on public.notifications for select using (auth.uid() = user_id);
+create policy "members update own notifications" on public.notifications for update using (auth.uid() = user_id);
 create policy "members write own posts" on public.posts for insert with check (auth.uid() = author_id);
 create policy "members update own posts" on public.posts for update using (auth.uid() = author_id);
 create policy "managers moderate posts" on public.posts for update using (public.is_manager_for_board(auth.uid(), board_id));

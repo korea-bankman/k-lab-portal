@@ -73,6 +73,7 @@ export type Notification = {
   id: string;
   userId: string;
   title: string;
+  linkUrl?: string;
   isRead: boolean;
   createdAt: string;
 };

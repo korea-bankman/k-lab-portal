@@ -69,6 +69,12 @@ export async function resolveReportAction(formData: FormData) {
     redirect(withMessage("/manager", "처리할 신고를 찾지 못했습니다."));
   }
 
+  const { data: report } = await admin
+    .from("reports")
+    .select("reporter_id, post_id")
+    .eq("id", reportId)
+    .maybeSingle();
+
   const { error } = await admin
     .from("reports")
     .update({
@@ -82,6 +88,15 @@ export async function resolveReportAction(formData: FormData) {
     redirect(withMessage("/manager", `신고 처리 실패: ${error.message}`));
   }
 
+  if (report?.reporter_id) {
+    await admin.from("notifications").insert({
+      user_id: report.reporter_id,
+      title: "접수한 신고가 처리되었습니다.",
+      link_url: report.post_id ? `/posts/${report.post_id}` : "/mypage"
+    });
+  }
+
   revalidatePath("/manager");
+  revalidatePath("/mypage");
   redirect(withMessage("/manager", "신고를 처리 완료로 변경했습니다."));
 }

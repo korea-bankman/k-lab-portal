@@ -12,6 +12,19 @@ export async function Header() {
         .catch(() => null)
     : null;
   const profile = user ? await getSignedInProfile() : null;
+  let unreadCount = 0;
+  if (user && supabase) {
+    try {
+      const { count } = await supabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("is_read", false);
+      unreadCount = count ?? 0;
+    } catch {
+      unreadCount = 0;
+    }
+  }
 
   return (
     <header className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur">
@@ -63,7 +76,7 @@ export async function Header() {
           {user ? (
             <>
               <Link className="rounded-md border px-3 py-2 font-semibold" href="/mypage">
-                마이페이지
+                마이페이지{unreadCount > 0 ? ` ${unreadCount}` : ""}
               </Link>
               <form action={signOutAction}>
                 <button className="rounded-md bg-slate-800 px-3 py-2 font-semibold text-white">로그아웃</button>

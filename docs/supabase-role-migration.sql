@@ -10,6 +10,8 @@ alter table public.comments add column if not exists hidden_by uuid references p
 alter table public.comments add column if not exists deleted_at timestamptz;
 alter table public.comments add column if not exists deleted_by uuid references public.profiles(id);
 
+alter table public.notifications add column if not exists link_url text;
+
 create table if not exists public.manager_board_permissions (
   id uuid primary key default uuid_generate_v4(),
   manager_id uuid not null references public.profiles(id) on delete cascade,
@@ -73,6 +75,12 @@ alter table public.moderation_logs enable row level security;
 
 drop policy if exists "admins update profiles" on public.profiles;
 create policy "admins update profiles" on public.profiles for update using (public.is_admin(auth.uid()));
+
+drop policy if exists "members read own notifications" on public.notifications;
+create policy "members read own notifications" on public.notifications for select using (auth.uid() = user_id);
+
+drop policy if exists "members update own notifications" on public.notifications;
+create policy "members update own notifications" on public.notifications for update using (auth.uid() = user_id);
 
 drop policy if exists "managers moderate posts" on public.posts;
 create policy "managers moderate posts" on public.posts for update using (public.is_manager_for_board(auth.uid(), board_id));
