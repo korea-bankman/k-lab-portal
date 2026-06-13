@@ -123,6 +123,20 @@ function getXmlBlocks(xml: string, tagName: string) {
   return Array.from(xml.matchAll(new RegExp(`<${tagName}>([\\s\\S]*?)<\\/${tagName}>`, "gi"))).map((match) => match[1]);
 }
 
+function throwXmlApiErrorIfNeeded(xml: string) {
+  const error = getXmlTag(xml, "error");
+  const message = getXmlTag(xml, "message");
+  const messageCd = getXmlTag(xml, "messageCd");
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  if (message && messageCd && messageCd !== "000") {
+    throw new Error(message);
+  }
+}
+
 async function fetchSaraminJobs(keyword: string): Promise<ImportedJob[]> {
   const accessKey = process.env.SARAMIN_ACCESS_KEY?.trim();
   if (!accessKey) return [];
@@ -183,6 +197,7 @@ async function fetchWorknetJobs(keyword: string): Promise<ImportedJob[]> {
   url.searchParams.set("sortOrderBy", "DESC");
 
   const payload = await fetchText(url);
+  throwXmlApiErrorIfNeeded(payload);
   const jobs = getXmlBlocks(payload, "wanted");
 
   return jobs.map((item) => {
