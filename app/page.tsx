@@ -4,18 +4,28 @@ import { JobList } from "@/components/job-list";
 import { PostList } from "@/components/post-list";
 import { Section } from "@/components/section";
 import { Sidebar } from "@/components/sidebar";
-import { getJobs, getPopularPosts, getPosts } from "@/lib/data/repository";
+import { getJobs, getPosts } from "@/lib/data/repository";
 import { getSupabaseJobs } from "@/lib/data/supabase-repository";
 
 export default async function HomePage() {
   const supabaseJobs = await getSupabaseJobs({ sort: "latest", limit: 5 });
   const todayJobs = supabaseJobs.length > 0 ? supabaseJobs : getJobs({ sort: "latest", limit: 5 });
-  const popularPosts = getPopularPosts(6);
-  const latestPosts = getPosts({ limit: 7 });
+  const latestPosts = getPosts({ limit: 6 });
+  const noticePosts = getPosts({ noticesOnly: true, limit: 3 });
   const stats = [
     ["채용공고", todayJobs.length],
-    ["인기글", popularPosts.length],
-    ["최신글", latestPosts.length]
+    ["최신글", latestPosts.length],
+    ["공지", noticePosts.length]
+  ];
+  const categoryLinks = [
+    ["취업상담", "/boards/career"],
+    ["해외분야", "/boards/overseas"],
+    ["대학원/연구원", "/boards/graduate-research"],
+    ["CRC/CRA/CRO", "/boards/crc-cra-cro"],
+    ["병리과", "/boards/pathology"],
+    ["진단검사의학", "/boards/hematology"],
+    ["생리기능", "/boards/ecg"],
+    ["초음파", "/boards/ultrasound"]
   ];
 
   return (
@@ -49,16 +59,16 @@ export default async function HomePage() {
           <Section title="오늘의 채용공고" action={<Link className="text-sm font-semibold text-brand-700" href="/jobs">전체보기</Link>}>
             <JobList jobs={todayJobs} />
           </Section>
-          <Section title="전체 인기글" action={<Link className="text-sm font-semibold text-brand-700" href="/boards/free">게시판 이동</Link>}>
-            <PostList posts={popularPosts} />
-          </Section>
-          <Section title="최신글">
+          <Section title="최신 커뮤니티 글" action={<Link className="text-sm font-semibold text-brand-700" href="/boards/free">게시판 이동</Link>}>
             <PostList posts={latestPosts} />
+          </Section>
+          <Section title="공지사항">
+            <PostList posts={noticePosts} />
           </Section>
           <Section title="카테고리 바로가기">
             <div className="grid gap-2 p-4 sm:grid-cols-2">
-              {["진단검사의학", "생리기능", "초음파", "취업상담"].map((label) => (
-                <Link key={label} href={label === "취업상담" ? "/boards/career" : "/boards/hematology"} className="rounded-md border px-4 py-3 font-semibold hover:border-brand-500 hover:text-brand-700">
+              {categoryLinks.map(([label, href]) => (
+                <Link key={label} href={href} className="rounded-md border px-4 py-3 font-semibold hover:border-brand-500 hover:text-brand-700">
                   {label}
                 </Link>
               ))}

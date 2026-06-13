@@ -41,9 +41,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ jobI
         <div className="p-5">
           <h2 className="font-bold">공고 내용</h2>
           <p className="mt-3 leading-7 text-slate-700">{job.description}</p>
-          <a href={job.originalUrl} target="_blank" rel="noreferrer" className="mt-5 inline-block rounded-md bg-brand-600 px-5 py-2.5 font-bold text-white">
-            원문 공고 보기
+          <a href={job.originalUrl} target="_blank" rel="noreferrer" className="mt-5 block rounded-md bg-brand-600 px-5 py-3 text-center text-base font-black text-white md:inline-block md:px-6">
+            원문에서 지원하기
           </a>
+          <p className="mt-2 text-xs text-slate-500">지원 및 상세 조건 확인은 원문 사이트에서 진행됩니다.</p>
         </div>
       </div>
     </div>
