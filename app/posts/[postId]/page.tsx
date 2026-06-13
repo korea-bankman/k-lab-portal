@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { addCommentAction, hideCommentAction, hidePostAction, togglePostLikeAction } from "@/app/actions/posts";
+import { createReportAction } from "@/app/actions/reports";
 import { getSignedInProfile } from "@/lib/auth/profile";
 import { getBoardBySlug, getBoards, getCommentsByPostId, getPostById } from "@/lib/data/repository";
 import { getSupabaseBoards, getSupabaseCommentsByPostId, getSupabasePostById } from "@/lib/data/supabase-repository";
@@ -54,6 +55,13 @@ export default async function PostDetailPage({ params, searchParams }: { params:
             </form>
           )}
         </div>
+        {profile && (
+          <form action={createReportAction} className="grid gap-2 border-t bg-slate-50 p-5 md:grid-cols-[1fr_auto]">
+            <input type="hidden" name="postId" value={post.id} />
+            <input name="reason" className="rounded-md border px-3 py-2 text-sm" placeholder="게시글 신고 사유를 입력하세요" required />
+            <button className="rounded-md border px-4 py-2 text-sm font-bold text-slate-700">게시글 신고</button>
+          </form>
+        )}
       </article>
       <section className="mt-5 rounded-lg border bg-white">
         <h2 className="border-b px-5 py-3 font-bold">댓글 {comments.length}</h2>
@@ -70,6 +78,14 @@ export default async function PostDetailPage({ params, searchParams }: { params:
                   <input type="hidden" name="postId" value={post.id} />
                   <input type="hidden" name="commentId" value={comment.id} />
                   <button className="text-xs font-bold text-red-600">댓글 숨김</button>
+                </form>
+              )}
+              {profile && supabasePost && (
+                <form action={createReportAction} className="mt-3 flex gap-2">
+                  <input type="hidden" name="postId" value={post.id} />
+                  <input type="hidden" name="commentId" value={comment.id} />
+                  <input name="reason" className="min-w-0 flex-1 rounded-md border px-3 py-1.5 text-xs" placeholder="댓글 신고 사유" required />
+                  <button className="rounded-md border px-2 py-1.5 text-xs font-bold">신고</button>
                 </form>
               )}
             </div>

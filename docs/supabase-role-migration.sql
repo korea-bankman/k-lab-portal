@@ -96,7 +96,15 @@ drop policy if exists "members create reports" on public.reports;
 create policy "members create reports" on public.reports for insert with check (auth.uid() = reporter_id);
 
 drop policy if exists "managers read reports" on public.reports;
-create policy "managers read reports" on public.reports for select using (public.is_admin(auth.uid()));
+drop policy if exists "moderators read reports" on public.reports;
+create policy "moderators read reports" on public.reports for select using (
+  public.is_admin(auth.uid())
+  or exists (
+    select 1 from public.posts
+    where posts.id = reports.post_id
+      and public.is_manager_for_board(auth.uid(), posts.board_id)
+  )
+);
 
 drop policy if exists "moderators write logs" on public.moderation_logs;
 create policy "moderators write logs" on public.moderation_logs for insert with check (actor_id = auth.uid());

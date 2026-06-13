@@ -49,6 +49,29 @@ type CommentRow = {
   profiles?: { nickname: string } | null;
 };
 
+export type ReportItem = {
+  id: string;
+  postId: string;
+  commentId: string | null;
+  reason: string;
+  status: string;
+  createdAt: string;
+  reporterName: string;
+  postTitle: string;
+  boardId: string;
+};
+
+type ReportRow = {
+  id: string;
+  post_id: string;
+  comment_id: string | null;
+  reason: string;
+  status: string;
+  created_at: string;
+  profiles?: { nickname: string } | null;
+  posts?: { title: string; board_id: string } | null;
+};
+
 function mapBoard(row: BoardRow): Board {
   return {
     id: row.id,
@@ -293,4 +316,37 @@ export async function getSupabaseRecentComments(limit = 5) {
 
   if (error || !data) return [];
   return (data as unknown as CommentRow[]).map(mapComment);
+}
+
+export async function getOpenReports(options?: { boardIds?: string[]; limit?: number }) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from("reports")
+    .select("id, post_id, comment_id, reason, status, created_at, profiles(nickname), posts(title, board_id)")
+    .eq("status", "open")
+    .order("created_at", { ascending: false });
+
+  if (typeof options?.limit === "number") {
+    query = query.limit(options.limit);
+  }
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+
+  const boardIds = options?.boardIds ? new Set(options.boardIds) : null;
+  return (data as unknown as ReportRow[])
+    .filter((row) => !boardIds || boardIds.has(row.posts?.board_id ?? ""))
+    .map((row) => ({
+      id: row.id,
+      postId: row.post_id,
+      commentId: row.comment_id,
+      reason: row.reason,
+      status: row.status,
+      createdAt: row.created_at,
+      reporterName: row.profiles?.nickname ?? "회원",
+      postTitle: row.posts?.title ?? "게시글",
+      boardId: row.posts?.board_id ?? ""
+    }));
 }

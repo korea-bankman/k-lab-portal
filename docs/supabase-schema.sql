@@ -215,5 +215,12 @@ create policy "members like posts" on public.post_likes for insert with check (a
 create policy "admins manage manager permissions" on public.manager_board_permissions for all using (public.is_admin(auth.uid())) with check (public.is_admin(auth.uid()));
 create policy "managers read own permissions" on public.manager_board_permissions for select using (manager_id = auth.uid() or public.is_admin(auth.uid()));
 create policy "members create reports" on public.reports for insert with check (auth.uid() = reporter_id);
-create policy "managers read reports" on public.reports for select using (public.is_admin(auth.uid()));
+create policy "moderators read reports" on public.reports for select using (
+  public.is_admin(auth.uid())
+  or exists (
+    select 1 from public.posts
+    where posts.id = reports.post_id
+      and public.is_manager_for_board(auth.uid(), posts.board_id)
+  )
+);
 create policy "moderators write logs" on public.moderation_logs for insert with check (actor_id = auth.uid());
