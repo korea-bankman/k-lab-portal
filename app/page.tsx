@@ -25,10 +25,11 @@ export default async function HomePage() {
           <div>
             <p className="text-sm font-bold text-brand-700">대한민국 임상병리사 전문 포털</p>
             <h1 className="mt-1 text-2xl font-black text-slate-950 md:text-3xl">커뮤니티와 채용정보를 한 곳에서 확인하세요.</h1>
-            <form action="/search" className="mt-4 flex max-w-xl">
-              <input name="q" className="w-full rounded-l-md border border-r-0 px-4 py-2" placeholder="임상병리사 채용, 면접, 수혈, QC 검색" />
-              <button className="rounded-r-md bg-brand-600 px-5 py-2 font-bold text-white">검색</button>
-            </form>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link href="/jobs" className="rounded-md bg-brand-600 px-4 py-2 text-sm font-bold text-white">채용공고 보기</Link>
+              <Link href="/boards/free" className="rounded-md border px-4 py-2 text-sm font-bold">커뮤니티 보기</Link>
+              <Link href="/posts/new" className="rounded-md border px-4 py-2 text-sm font-bold">글쓰기</Link>
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {stats.map(([label, value]) => (
@@ -41,8 +42,10 @@ export default async function HomePage() {
         </div>
       </div>
       <div className="grid gap-5 lg:grid-cols-[220px_1fr_280px]">
-        <BoardNav />
-        <div className="space-y-5">
+        <div className="hidden lg:order-1 lg:block">
+          <BoardNav />
+        </div>
+        <div className="order-1 space-y-5 lg:order-2">
           <Section title="오늘의 채용공고" action={<Link className="text-sm font-semibold text-brand-700" href="/jobs">전체보기</Link>}>
             <JobList jobs={todayJobs} />
           </Section>
@@ -62,7 +65,9 @@ export default async function HomePage() {
             </div>
           </Section>
         </div>
-        <Sidebar />
+        <div className="order-3">
+          <Sidebar />
+        </div>
       </div>
     </div>
   );
