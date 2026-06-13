@@ -59,7 +59,7 @@ Vercel로 배포할 경우 `vercel.json`의 Cron 설정으로 매일 오전 8시
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `CRON_SECRET`
-- `WORKNET_API_KEY`
+- `WORKNET_API_KEY` 고용24 OPEN-API 채용정보 인증키
 - `SARAMIN_ACCESS_KEY`
 - `JOB_IMPORT_KEYWORD` 기본값: `임상병리사`
 

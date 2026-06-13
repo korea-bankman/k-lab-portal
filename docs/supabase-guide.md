@@ -42,9 +42,10 @@ where email = '관리자로_쓸_이메일@example.com';
 
 - 실행 주소: `/api/cron/import-jobs`
 - Vercel Cron 시간: 매일 08:00, 18:00 KST
-- 현재 지원 출처: 워크넷, 사람인
+- 현재 지원 출처: 고용24 채용정보 API, 사람인
 - 키가 없는 출처는 건너뜁니다.
 - 같은 `original_url`이 이미 저장되어 있으면 중복 저장하지 않습니다.
+- 고용24 채용정보 API 문서의 요청 URL은 `https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do` 입니다.
 
 로컬에서 테스트할 때:
 
@@ -56,7 +57,8 @@ Vercel 환경변수에는 아래를 넣습니다.
 
 ```text
 CRON_SECRET=아무도_모르는_긴_문자
-WORKNET_API_KEY=워크넷에서_받은_API키
+WORKNET_API_KEY=고용24_OPEN_API_채용정보_인증키
+WORKNET_API_URL=https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do
 SARAMIN_ACCESS_KEY=사람인에서_받은_access-key
 JOB_IMPORT_KEYWORD=임상병리사
 SUPABASE_SERVICE_ROLE_KEY=Supabase_Service_Role_Key

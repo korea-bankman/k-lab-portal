@@ -89,6 +89,40 @@ async function fetchJson(url: URL) {
   return response.json() as Promise<unknown>;
 }
 
+async function fetchText(url: URL) {
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/xml,text/xml,*/*",
+      "User-Agent": "K-Lab Portal Job Importer"
+    },
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  return response.text();
+}
+
+function decodeXmlEntities(value: string) {
+  return value
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", "\"")
+    .replaceAll("&apos;", "'")
+    .replaceAll("&amp;", "&");
+}
+
+function getXmlTag(xml: string, tagName: string) {
+  const match = xml.match(new RegExp(`<${tagName}>([\\s\\S]*?)<\\/${tagName}>`, "i"));
+  return match ? decodeXmlEntities(match[1].trim()) : "";
+}
+
+function getXmlBlocks(xml: string, tagName: string) {
+  return Array.from(xml.matchAll(new RegExp(`<${tagName}>([\\s\\S]*?)<\\/${tagName}>`, "gi"))).map((match) => match[1]);
+}
+
 async function fetchSaraminJobs(keyword: string): Promise<ImportedJob[]> {
   const accessKey = process.env.SARAMIN_ACCESS_KEY?.trim();
   if (!accessKey) return [];
@@ -138,45 +172,36 @@ async function fetchWorknetJobs(keyword: string): Promise<ImportedJob[]> {
   const authKey = process.env.WORKNET_API_KEY?.trim();
   if (!authKey) return [];
 
-  const endpoint = process.env.WORKNET_API_URL?.trim() || "https://openapi.work.go.kr/opi/opi/opia/wantedApi.do";
+  const endpoint = process.env.WORKNET_API_URL?.trim() || "https://www.work24.go.kr/cm/openApi/call/wk/callOpenApiSvcInfo210L01.do";
   const url = new URL(endpoint);
   url.searchParams.set("authKey", authKey);
   url.searchParams.set("callTp", "L");
-  url.searchParams.set("returnType", "JSON");
+  url.searchParams.set("returnType", "XML");
   url.searchParams.set("startPage", "1");
   url.searchParams.set("display", "100");
   url.searchParams.set("keyword", keyword);
+  url.searchParams.set("sortOrderBy", "DESC");
 
-  const payload = await fetchJson(url);
-  const root = (payload as { wantedRoot?: { wanted?: unknown | unknown[] } })?.wantedRoot;
-  const jobs = toArray(root?.wanted);
+  const payload = await fetchText(url);
+  const jobs = getXmlBlocks(payload, "wanted");
 
   return jobs.map((item) => {
-    const job = item as {
-      wantedAuthNo?: string;
-      wantedInfoUrl?: string;
-      company?: string;
-      title?: string;
-      region?: string;
-      career?: string;
-      empTpNm?: string;
-      closeDt?: string;
-      salTpNm?: string;
-    };
-    const wantedAuthNo = toText(job.wantedAuthNo);
-    const originalUrl = toText(job.wantedInfoUrl, wantedAuthNo ? `https://www.work24.go.kr/wk/a/b/1200/retriveDtlEmpSrchList.do?wantedAuthNo=${wantedAuthNo}` : "");
+    const wantedAuthNo = getXmlTag(item, "wantedAuthNo");
+    const title = getXmlTag(item, "title");
+    const originalUrl = getXmlTag(item, "wantedInfoUrl") || (wantedAuthNo ? `https://www.work24.go.kr/wk/a/b/1200/retriveDtlEmpSrchList.do?wantedAuthNo=${wantedAuthNo}` : "");
+    const employmentType = getXmlTag(item, "empTpNm") || getXmlTag(item, "holidayTpNm");
 
     return {
-      sourceName: "워크넷",
+      sourceName: "고용24",
       sourceBaseUrl: "https://www.work24.go.kr",
-      hospitalName: toText(job.company, "병원명 미확인"),
+      hospitalName: toText(getXmlTag(item, "company"), "병원명 미확인"),
       department: "임상병리사",
-      region: normalizeRegion(job.region),
-      experience: toText(job.career, "경력무관"),
-      employmentType: toText(job.empTpNm, "고용형태 미확인"),
-      deadline: normalizeDeadline(job.closeDt),
+      region: normalizeRegion(getXmlTag(item, "region")),
+      experience: toText(getXmlTag(item, "career"), "경력무관"),
+      employmentType: toText(employmentType, "고용형태 미확인"),
+      deadline: normalizeDeadline(getXmlTag(item, "closeDt")),
       originalUrl,
-      description: buildDescription([toText(job.title, keyword), toText(job.salTpNm)])
+      description: buildDescription([title || keyword, getXmlTag(item, "salTpNm"), getXmlTag(item, "sal")])
     };
   }).filter((job) => job.originalUrl);
 }
@@ -280,7 +305,7 @@ export async function importClinicalLabJobs(): Promise<ImportJobsResult> {
   const keyword = process.env.JOB_IMPORT_KEYWORD?.trim() || DEFAULT_KEYWORD;
   const startedAt = new Date().toISOString();
   const sources = await Promise.all([
-    importFromSource("워크넷", () => fetchWorknetJobs(keyword)),
+    importFromSource("고용24", () => fetchWorknetJobs(keyword)),
     importFromSource("사람인", () => fetchSaraminJobs(keyword))
   ]);
 
