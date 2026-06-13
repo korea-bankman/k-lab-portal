@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createPostAction } from "@/app/actions/posts";
+import { createPostAction, updatePostAction } from "@/app/actions/posts";
 import { getBoards } from "@/lib/data/repository";
 import { getSupabaseBoards } from "@/lib/data/supabase-repository";
 import type { Post } from "@/lib/types/domain";
@@ -18,7 +18,8 @@ export async function PostEditor({ mode, post, message }: { mode: "new" | "edit"
             현재 게시판 목록은 Mock 데이터입니다. 실제 글 저장 전 Supabase SQL Editor에서 <strong>docs/supabase-seed.sql</strong>을 실행해 주세요.
           </p>
         )}
-        <form action={mode === "new" ? createPostAction : undefined} className="mt-5 space-y-4">
+        <form action={mode === "new" ? createPostAction : updatePostAction} className="mt-5 space-y-4">
+          {post && <input type="hidden" name="postId" value={post.id} />}
           <select name="boardId" className="w-full rounded-md border px-4 py-3" defaultValue={post?.boardId ?? boards[0]?.id}>
             {boards.map((board) => (
               <option key={board.id} value={board.id}>{board.name}</option>

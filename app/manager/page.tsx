@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { hidePostAction } from "@/app/actions/posts";
 import { getManagerBoardPermissions } from "@/lib/auth/admin-data";
 import { getSignedInProfile } from "@/lib/auth/profile";
+import { getSupabasePosts } from "@/lib/data/supabase-repository";
+import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +35,13 @@ export default async function ManagerPage() {
   }
 
   const permissions = profile.role === "admin" ? await getManagerBoardPermissions() : await getManagerBoardPermissions(profile.id);
+  const boardIds = [...new Set(permissions.map((permission) => permission.boardId))];
+  const manageablePosts = (
+    await Promise.all(boardIds.map((boardId) => getSupabasePosts({ boardId, limit: 8 })))
+  )
+    .flat()
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    .slice(0, 20);
 
   return (
     <div className="container-page py-6">
@@ -57,11 +67,21 @@ export default async function ManagerPage() {
           </div>
         </section>
         <section className="rounded-lg border bg-white">
-          <h2 className="border-b px-5 py-3 font-bold">다음 관리 기능</h2>
-          <div className="grid gap-2 p-5">
-            {["신고된 게시글 처리", "댓글 숨김/복구", "게시글 숨김/복구", "공지글 작성", "인기글 고정"].map((item) => (
-              <button key={item} className="rounded-md border px-4 py-3 text-left font-semibold text-slate-500">{item} 준비 중</button>
+          <h2 className="border-b px-5 py-3 font-bold">최근 관리 대상 게시글</h2>
+          <div className="divide-y">
+            {manageablePosts.map((post) => (
+              <div key={post.id} className="grid gap-3 p-5">
+                <div>
+                  <Link href={`/posts/${post.id}`} className="font-bold hover:text-brand-700">{post.title}</Link>
+                  <p className="mt-1 text-xs text-slate-500">{post.authorName} · {formatDate(post.createdAt)} · 댓글 {post.commentCount}</p>
+                </div>
+                <form action={hidePostAction}>
+                  <input type="hidden" name="postId" value={post.id} />
+                  <button className="rounded-md border px-3 py-2 text-sm font-bold text-red-600">게시글 숨김</button>
+                </form>
+              </div>
             ))}
+            {manageablePosts.length === 0 && <p className="p-5 text-sm text-slate-500">관리할 Supabase 게시글이 아직 없습니다.</p>}
           </div>
         </section>
       </div>

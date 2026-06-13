@@ -35,7 +35,7 @@ export async function Header() {
             </div>
           )}
         </div>
-        <form action="/boards/free" className="flex flex-1">
+        <form action="/search" className="flex flex-1">
           <input
             name="q"
             placeholder="게시글, 태그, 채용공고 통합 검색"

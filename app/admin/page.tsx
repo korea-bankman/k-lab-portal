@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { assignManagerBoardAction, removeManagerBoardAction, updateUserRoleAction } from "@/app/actions/admin";
+import { createManualJobAction } from "@/app/actions/jobs";
 import { getAllProfiles, getManagerBoardPermissions } from "@/lib/auth/admin-data";
 import { getBoards, getJobSources, getJobs, getPosts } from "@/lib/data/repository";
 import { getSignedInProfile } from "@/lib/auth/profile";
@@ -71,7 +72,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <h2 className="border-b px-5 py-3 font-bold">관리 메뉴</h2>
           <div className="grid gap-2 p-5">
             <Link href="/manager" className="rounded-md border px-4 py-3 font-semibold hover:border-brand-500 hover:text-brand-700">매니저 콘솔</Link>
-            {["게시글 신고 관리", "공지사항 작성", "채용공고 수동 등록"].map((item) => (
+            {["게시글 신고 관리", "공지사항 작성"].map((item) => (
               <button key={item} className="rounded-md border px-4 py-3 text-left font-semibold text-slate-500">{item} 준비 중</button>
             ))}
           </div>
@@ -93,6 +94,20 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           </div>
         </section>
       </div>
+      <section className="mt-5 rounded-lg border bg-white">
+        <h2 className="border-b px-5 py-3 font-bold">채용공고 수동 등록</h2>
+        <form action={createManualJobAction} className="grid gap-3 p-5 md:grid-cols-2">
+          <input name="hospitalName" className="rounded-md border px-3 py-2" placeholder="병원명" required />
+          <input name="department" className="rounded-md border px-3 py-2" placeholder="모집분야 예: 임상병리사" required />
+          <input name="region" className="rounded-md border px-3 py-2" placeholder="지역 예: 서울" required />
+          <input name="experience" className="rounded-md border px-3 py-2" placeholder="경력조건 예: 경력무관" />
+          <input name="employmentType" className="rounded-md border px-3 py-2" placeholder="고용형태 예: 정규직" />
+          <input name="deadline" type="date" className="rounded-md border px-3 py-2" required />
+          <input name="originalUrl" className="rounded-md border px-3 py-2 md:col-span-2" placeholder="원문 URL" required />
+          <textarea name="description" className="h-24 rounded-md border p-3 md:col-span-2" placeholder="공고 내용 요약" />
+          <button className="rounded-md bg-brand-600 px-4 py-2 font-bold text-white md:col-span-2">채용공고 등록</button>
+        </form>
+      </section>
       <section className="mt-5 rounded-lg border bg-white">
         <h2 className="border-b px-5 py-3 font-bold">회원 권한 관리</h2>
         <div className="divide-y">

@@ -33,6 +33,10 @@ export default async function BoardPage({ params, searchParams }: { params: Prom
             </div>
           </div>
           <Section title={q ? `"${q}" 검색 결과` : "게시글 목록"}>
+            <form className="flex border-b p-4">
+              <input name="q" defaultValue={q ?? ""} className="w-full rounded-l-md border border-r-0 px-3 py-2 text-sm" placeholder={`${board.name}에서 검색`} />
+              <button className="rounded-r-md bg-slate-800 px-4 py-2 text-sm font-bold text-white">검색</button>
+            </form>
             <PostList posts={boardPosts} />
           </Section>
         </div>

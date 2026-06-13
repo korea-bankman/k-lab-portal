@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Board, BoardGroup, Job, Post } from "@/lib/types/domain";
+import type { Board, BoardGroup, Comment, Job, Post } from "@/lib/types/domain";
 
 type BoardRow = {
   id: string;
@@ -38,6 +38,15 @@ type JobRow = {
   description: string;
   created_at: string;
   job_sources?: { name: string } | null;
+};
+
+type CommentRow = {
+  id: string;
+  post_id: string;
+  author_id: string;
+  content: string;
+  created_at: string;
+  profiles?: { nickname: string } | null;
 };
 
 function mapBoard(row: BoardRow): Board {
@@ -86,6 +95,17 @@ function mapJob(row: JobRow): Job {
   };
 }
 
+function mapComment(row: CommentRow): Comment {
+  return {
+    id: row.id,
+    postId: row.post_id,
+    authorId: row.author_id,
+    authorName: row.profiles?.nickname ?? "회원",
+    content: row.content,
+    createdAt: row.created_at
+  };
+}
+
 export async function getSupabaseBoards() {
   const supabase = await createClient();
   if (!supabase) return [];
@@ -111,6 +131,8 @@ export async function getSupabasePosts(options?: { boardId?: string; query?: str
   let query = supabase
     .from("posts")
     .select("id, board_id, title, content, author_id, view_count, like_count, comment_count, is_notice, created_at, updated_at, profiles(nickname)")
+    .is("hidden_at", null)
+    .is("deleted_at", null)
     .order("is_notice", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -141,6 +163,8 @@ export async function getSupabasePostById(id: string) {
     .from("posts")
     .select("id, board_id, title, content, author_id, view_count, like_count, comment_count, is_notice, created_at, updated_at, profiles(nickname)")
     .eq("id", id)
+    .is("hidden_at", null)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error || !data) {
@@ -156,6 +180,8 @@ async function getSupabasePostsWithoutProfiles(options?: { boardId?: string; que
   let query = supabase
     .from("posts")
     .select("id, board_id, title, content, author_id, view_count, like_count, comment_count, is_notice, created_at, updated_at")
+    .is("hidden_at", null)
+    .is("deleted_at", null)
     .order("is_notice", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -184,6 +210,8 @@ async function getSupabasePostByIdWithoutProfile(id: string) {
     .from("posts")
     .select("id, board_id, title, content, author_id, view_count, like_count, comment_count, is_notice, created_at, updated_at")
     .eq("id", id)
+    .is("hidden_at", null)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error || !data) return null;
@@ -233,4 +261,36 @@ export async function getSupabaseJobById(id: string) {
 
   if (error || !data) return null;
   return mapJob(data as unknown as JobRow);
+}
+
+export async function getSupabaseCommentsByPostId(postId: string) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("comments")
+    .select("id, post_id, author_id, content, created_at, profiles(nickname)")
+    .eq("post_id", postId)
+    .is("hidden_at", null)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true });
+
+  if (error || !data) return [];
+  return (data as unknown as CommentRow[]).map(mapComment);
+}
+
+export async function getSupabaseRecentComments(limit = 5) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("comments")
+    .select("id, post_id, author_id, content, created_at, profiles(nickname)")
+    .is("hidden_at", null)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+  return (data as unknown as CommentRow[]).map(mapComment);
 }

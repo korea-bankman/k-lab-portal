@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { getPopularTags, getPosts, getRecentComments } from "@/lib/data/repository";
+import { getSupabaseRecentComments } from "@/lib/data/supabase-repository";
 
-export function Sidebar() {
+export async function Sidebar() {
   const notices = getPosts({ noticesOnly: true, limit: 3 });
-  const comments = getRecentComments();
+  const supabaseComments = await getSupabaseRecentComments();
+  const comments = supabaseComments.length > 0 ? supabaseComments : getRecentComments();
   const tags = getPopularTags();
 
   return (
