@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Board, BoardGroup, Post } from "@/lib/types/domain";
+import type { Board, BoardGroup, Job, Post } from "@/lib/types/domain";
 
 type BoardRow = {
   id: string;
@@ -23,6 +23,21 @@ type PostRow = {
   created_at: string;
   updated_at: string;
   profiles?: { nickname: string } | null;
+};
+
+type JobRow = {
+  id: string;
+  hospital_name: string;
+  department: string;
+  region: string;
+  experience: string;
+  employment_type: string;
+  deadline: string;
+  original_url: string;
+  source_id: string | null;
+  description: string;
+  created_at: string;
+  job_sources?: { name: string } | null;
 };
 
 function mapBoard(row: BoardRow): Board {
@@ -51,6 +66,23 @@ function mapPost(row: PostRow): Post {
     isNotice: row.is_notice,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+}
+
+function mapJob(row: JobRow): Job {
+  return {
+    id: row.id,
+    hospitalName: row.hospital_name,
+    department: row.department,
+    region: row.region,
+    experience: row.experience,
+    employmentType: row.employment_type,
+    deadline: row.deadline,
+    originalUrl: row.original_url,
+    sourceId: row.source_id ?? "",
+    sourceName: row.job_sources?.name ?? "외부 채용",
+    description: row.description,
+    createdAt: row.created_at
   };
 }
 
@@ -156,4 +188,49 @@ async function getSupabasePostByIdWithoutProfile(id: string) {
 
   if (error || !data) return null;
   return mapPost(data as unknown as PostRow);
+}
+
+export async function getSupabaseJobs(options?: { region?: string; department?: string; sort?: "latest" | "deadline"; limit?: number }) {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  let query = supabase
+    .from("jobs")
+    .select("id, hospital_name, department, region, experience, employment_type, deadline, original_url, source_id, description, created_at, job_sources(name)");
+
+  if (options?.region) {
+    query = query.ilike("region", `%${options.region}%`);
+  }
+
+  if (options?.department) {
+    query = query.ilike("department", `%${options.department}%`);
+  }
+
+  if (options?.sort === "deadline") {
+    query = query.order("deadline", { ascending: true });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  if (typeof options?.limit === "number") {
+    query = query.limit(options.limit);
+  }
+
+  const { data, error } = await query;
+  if (error || !data) return [];
+  return (data as unknown as JobRow[]).map(mapJob);
+}
+
+export async function getSupabaseJobById(id: string) {
+  const supabase = await createClient();
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("jobs")
+    .select("id, hospital_name, department, region, experience, employment_type, deadline, original_url, source_id, description, created_at, job_sources(name)")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return mapJob(data as unknown as JobRow);
 }

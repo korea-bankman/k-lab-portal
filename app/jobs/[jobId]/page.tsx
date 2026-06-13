@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getJobById } from "@/lib/data/repository";
+import { getSupabaseJobById } from "@/lib/data/supabase-repository";
 import { daysUntil, formatDate } from "@/lib/utils";
 
 export default async function JobDetailPage({ params }: { params: Promise<{ jobId: string }> }) {
   const { jobId } = await params;
-  const job = getJobById(jobId);
+  const job = await getSupabaseJobById(jobId) ?? getJobById(jobId);
   if (!job) notFound();
   const dDay = daysUntil(job.deadline);
 

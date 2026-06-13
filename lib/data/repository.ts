@@ -52,8 +52,8 @@ export function getRecentComments(limit = 5) {
 
 export function getJobs(options?: { region?: string; department?: string; sort?: "latest" | "deadline"; limit?: number }) {
   let result = [...jobs];
-  if (options?.region) result = result.filter((job) => job.region === options.region);
-  if (options?.department) result = result.filter((job) => job.department === options.department);
+  if (options?.region) result = result.filter((job) => job.region.includes(options.region ?? ""));
+  if (options?.department) result = result.filter((job) => job.department.includes(options.department ?? ""));
   result.sort((a, b) => {
     if (options?.sort === "deadline") return Date.parse(a.deadline) - Date.parse(b.deadline);
     return Date.parse(b.createdAt) - Date.parse(a.createdAt);

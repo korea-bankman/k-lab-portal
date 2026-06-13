@@ -9,6 +9,7 @@
 - Tailwind CSS
 - Supabase Auth / PostgreSQL 연결 준비
 - Netlify 배포 설정
+- Vercel Cron 기반 채용공고 자동 수집 준비
 
 ## 실행
 
@@ -50,9 +51,21 @@ Supabase 스키마와 설정 가이드는 `docs/supabase-schema.sql`, `docs/supa
 
 Netlify에서 GitHub 저장소를 연결한 뒤 build command를 `npm run build`, publish directory를 `.next`로 설정합니다. `netlify.toml`과 `@netlify/plugin-nextjs` 설정이 포함되어 있습니다.
 
+Vercel로 배포할 경우 `vercel.json`의 Cron 설정으로 매일 오전 8시, 오후 6시(KST)에 `/api/cron/import-jobs`가 실행됩니다.
+
+필요한 환경변수:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `CRON_SECRET`
+- `WORKNET_API_KEY`
+- `SARAMIN_ACCESS_KEY`
+- `JOB_IMPORT_KEYWORD` 기본값: `임상병리사`
+
 ## 확장 포인트
 
 - `lib/data/repository.ts`를 Supabase query adapter로 교체
 - 서버 액션 기반 글쓰기/댓글/좋아요 구현
-- `job_sources` 기반 채용 API 동기화
+- `job_sources` 기반 채용 API 동기화 고도화
 - AI 게시글 요약, 자동 태그, 채용 매칭 기능 추가

@@ -5,9 +5,11 @@ import { PostList } from "@/components/post-list";
 import { Section } from "@/components/section";
 import { Sidebar } from "@/components/sidebar";
 import { getJobs, getPopularPosts, getPosts } from "@/lib/data/repository";
+import { getSupabaseJobs } from "@/lib/data/supabase-repository";
 
-export default function HomePage() {
-  const todayJobs = getJobs({ sort: "latest", limit: 5 });
+export default async function HomePage() {
+  const supabaseJobs = await getSupabaseJobs({ sort: "latest", limit: 5 });
+  const todayJobs = supabaseJobs.length > 0 ? supabaseJobs : getJobs({ sort: "latest", limit: 5 });
   const popularPosts = getPopularPosts(6);
   const latestPosts = getPosts({ limit: 7 });
 
